@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.IO;
-using System.Threading;
 using Vishnu.Interchange;
 using System.Diagnostics;
 
@@ -16,29 +12,40 @@ namespace Log2MessageBox
     /// File: Log2MessageBox.cs
     /// Autor: Erik Nagel
     ///
-    /// 26.05.2014 Erik Nagel: erstellt
+    /// 26.05.2014 Erik Nagel: Erstellt.
+    /// 03.07.2021 Erik Nagel: Überarbeitet.
     /// </remarks>
     public class Log2MessageBox : INodeLogger
     {
+        #region public members
+
         #region INodeLogger implementaion
 
         /// <summary>
-        /// Übernahme von diversen Logging-Informationen.
+        /// Übernahme von diversen Logging-Informationen und Ausgabe in eine MessageBox.
         /// </summary>
         /// <param name="loggerParameters">Spezifische Aufrufparameter oder null.</param>
         /// <param name="treeParameters">Für den gesamten Tree gültige Parameter oder null.</param>
-        /// <param name="treeEvent">Klasse mit Informationen über das Ereignis.</param>
+        /// <param name="treeEvent">Objekt mit Informationen über das Ereignis.</param>
         /// <param name="additionalEventArgs">Enthält z.B. beim Event 'Exception' die zugehörige Exception.</param>
         public void Log(object loggerParameters, TreeParameters treeParameters, TreeEvent treeEvent, object additionalEventArgs)
         {
-            //string logPath = null;
-            //if (loggerParameters != null)
-            //{
-            //  logPath = loggerParameters.ToString();
-            //}
-            //string indent = "        ";
+            // Zusammenbauen der zu loggenden Nachricht
+            string bigMessage = BuildLogMessage(treeParameters, treeEvent, additionalEventArgs);
+
+            this.WriteLog(bigMessage, treeEvent);
+        }
+
+        #endregion INodeLogger implementaion
+
+        #endregion public members
+
+        #region private members
+
+        // Baut aus den übergebenen Parametern einen einzigen formatierten string zusammen.
+        private string BuildLogMessage(TreeParameters treeParameters, TreeEvent treeEvent, object additionalEventArgs)
+        {
             string indent = "";
-            //string delimiter = Environment.NewLine
             string delimiter = '"'.ToString() + " " + '"'.ToString();
             string addInfos = indent;
             if (treeEvent.Name.Contains("Exception"))
@@ -54,10 +61,7 @@ namespace Log2MessageBox
             bigMessage.Append(delimiter + treeEvent.Timestamp.ToString("yyyy-MM-dd HH:mm:ss,ms") + " Event: " + treeEvent.Name);
             bigMessage.Append(delimiter + indent + treeEvent.ReplaceWildcards("%MachineName%") + ", Thread: " + treeEvent.ThreadId.ToString());
             bigMessage.Append(", Tree: " + treeParameters.Name);
-            if (treeEvent.SenderId != treeEvent.SourceId)
-            {
-                bigMessage.Append(", Quelle: " + treeEvent.SourceId);
-            }
+            bigMessage.Append(", Quelle: " + treeEvent.SourceId);
             if (addInfos.Trim() != "")
             {
                 bigMessage.Append(delimiter + addInfos);
@@ -68,8 +72,8 @@ namespace Log2MessageBox
             }
             bigMessage.Append(delimiter + indent + "Logical: " + treeEvent.Logical);
             bigMessage.Append(", Status: " + treeEvent.State.ToString());
-            string workingDirectory = treeEvent.ReplaceWildcards("%WorkingDirectory%");
-            bigMessage.Append(delimiter + indent + "WorkingDirectory: " + workingDirectory);
+            bigMessage.Append(delimiter + indent + "WorkingDirectory: "
+                              + treeEvent.ReplaceWildcards("%WorkingDirectory%"));
             bigMessage.Append(delimiter + indent + "Results: ");
             if (treeEvent.Results != null)
             {
@@ -86,24 +90,24 @@ namespace Log2MessageBox
                     bigMessage.Append(delimiter + indent + result.ToString());
                 }
             }
-            this.log('"'.ToString() + bigMessage.ToString() + '"'.ToString(), treeEvent);
-        }
 
-        #endregion INodeLogger implementaion
+            return '"'.ToString() + bigMessage.ToString() + '"'.ToString();
+        }
 
         /// <summary>
         /// Hier wird die MessageBox als eigene Exe geschleudert.
         /// </summary>
         /// <param name="message">Aus allen Parametern aufbereiteter string.</param>
         /// <param name="treeEvent">Klasse mit Informationen über das Ereignis.</param>
-        private void log(string message, TreeEvent treeEvent)
+        private void WriteLog(string message, TreeEvent treeEvent)
         {
             Process nPad = new Process();
             nPad.StartInfo.FileName = treeEvent.GetResolvedPath("ConsoleMessageBox.exe");
             nPad.StartInfo.Arguments = "0 " + message + " " + "Knoten-Info";
-            //InfoController.Say(String.Format("Rufe {0} mit {1}", nPad.StartInfo.FileName, nPad.StartInfo.Arguments));
             nPad.Start();
         }
+
+        #endregion private members
 
     }
 }
