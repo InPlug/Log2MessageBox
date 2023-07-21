@@ -28,7 +28,7 @@ namespace Log2MessageBox
         /// <param name="treeParameters">Für den gesamten Tree gültige Parameter oder null.</param>
         /// <param name="treeEvent">Objekt mit Informationen über das Ereignis.</param>
         /// <param name="additionalEventArgs">Enthält z.B. beim Event 'Exception' die zugehörige Exception.</param>
-        public void Log(object loggerParameters, TreeParameters treeParameters, TreeEvent treeEvent, object additionalEventArgs)
+        public void Log(object? loggerParameters, TreeParameters? treeParameters, TreeEvent treeEvent, object? additionalEventArgs)
         {
             // Zusammenbauen der zu loggenden Nachricht
             string bigMessage = BuildLogMessage(treeParameters, treeEvent, additionalEventArgs);
@@ -43,14 +43,14 @@ namespace Log2MessageBox
         #region private members
 
         // Baut aus den übergebenen Parametern einen einzigen formatierten string zusammen.
-        private string BuildLogMessage(TreeParameters treeParameters, TreeEvent treeEvent, object additionalEventArgs)
+        private string BuildLogMessage(TreeParameters? treeParameters, TreeEvent treeEvent, object? additionalEventArgs)
         {
             string indent = "";
             string delimiter = '"'.ToString() + " " + '"'.ToString();
             string addInfos = indent;
             if (treeEvent.Name.Contains("Exception"))
             {
-                addInfos += (additionalEventArgs as Exception).Message;
+                addInfos += ((Exception?)additionalEventArgs)?.Message;
             }
             if (treeEvent.Name.Contains("ProgressChanged"))
             {
@@ -60,7 +60,7 @@ namespace Log2MessageBox
             StringBuilder bigMessage = new StringBuilder("Knoten: " + IdName);
             bigMessage.Append(delimiter + treeEvent.Timestamp.ToString("yyyy-MM-dd HH:mm:ss,ms") + " Event: " + treeEvent.Name);
             bigMessage.Append(delimiter + indent + treeEvent.ReplaceWildcards("%MachineName%") + ", Thread: " + treeEvent.ThreadId.ToString());
-            bigMessage.Append(", Tree: " + treeParameters.Name);
+            bigMessage.Append(", Tree: " + treeParameters?.Name);
             bigMessage.Append(", Quelle: " + treeEvent.SourceId);
             if (addInfos.Trim() != "")
             {
@@ -77,17 +77,17 @@ namespace Log2MessageBox
             bigMessage.Append(delimiter + indent + "Results: ");
             if (treeEvent.Results != null)
             {
-                foreach (Result result in treeEvent.Results.Values)
+                foreach (Result? result in treeEvent.Results.Values)
                 {
-                    bigMessage.Append(delimiter + indent + result.ToString());
+                    bigMessage.Append(delimiter + indent + result?.ToString());
                 }
             }
             bigMessage.Append(delimiter + indent + "Environment: ");
             if (treeEvent.Environment != null)
             {
-                foreach (Result result in treeEvent.Environment.Values)
+                foreach (Result? result in treeEvent.Environment.Values)
                 {
-                    bigMessage.Append(delimiter + indent + result.ToString());
+                    bigMessage.Append(delimiter + indent + result?.ToString());
                 }
             }
 
