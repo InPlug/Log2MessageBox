@@ -14,10 +14,13 @@ namespace Log2MessageBox
     ///
     /// 26.05.2014 Erik Nagel: Erstellt.
     /// 03.07.2021 Erik Nagel: Überarbeitet.
+    /// 10.08.2023 Erik Nagel: Auf VishnuMessageBox umgestellt.
     /// </remarks>
     public class Log2MessageBox : INodeLogger
     {
         #region public members
+
+        const string MessageNewLine = "#";
 
         #region INodeLogger implementaion
 
@@ -46,7 +49,6 @@ namespace Log2MessageBox
         private string BuildLogMessage(TreeParameters? treeParameters, TreeEvent treeEvent, object? additionalEventArgs)
         {
             string indent = "";
-            string delimiter = '"'.ToString() + " " + '"'.ToString();
             string addInfos = indent;
             if (treeEvent.Name.Contains("Exception"))
             {
@@ -56,38 +58,40 @@ namespace Log2MessageBox
             {
                 addInfos += String.Format("Fortschritt {0:d3}%", Convert.ToInt32((additionalEventArgs as object)));
             }
-            string IdName = treeEvent.NodeName + "|" + treeEvent.SenderId;
+            string IdName = treeEvent.NodeName + MessageNewLine + treeEvent.SenderId;
             StringBuilder bigMessage = new StringBuilder("Knoten: " + IdName);
-            bigMessage.Append(delimiter + treeEvent.Timestamp.ToString("yyyy-MM-dd HH:mm:ss,ms") + " Event: " + treeEvent.Name);
-            bigMessage.Append(delimiter + indent + treeEvent.ReplaceWildcards("%MachineName%") + ", Thread: " + treeEvent.ThreadId.ToString());
+            bigMessage.Append(MessageNewLine + treeEvent.Timestamp.ToString("yyyy-MM-dd HH:mm:ss,ms")
+                + " Event: " + treeEvent.Name);
+            bigMessage.Append(MessageNewLine + indent + treeEvent.ReplaceWildcards("%MachineName%")
+                + ", Thread: " + treeEvent.ThreadId.ToString());
             bigMessage.Append(", Tree: " + treeParameters?.Name);
             bigMessage.Append(", Quelle: " + treeEvent.SourceId);
             if (addInfos.Trim() != "")
             {
-                bigMessage.Append(delimiter + addInfos);
+                bigMessage.Append(MessageNewLine + addInfos);
             }
             if (!String.IsNullOrEmpty(treeEvent.NodePath))
             {
-                bigMessage.Append(delimiter + indent + treeEvent.NodePath);
+                bigMessage.Append(MessageNewLine + indent + treeEvent.NodePath);
             }
-            bigMessage.Append(delimiter + indent + "Logical: " + treeEvent.Logical);
+            bigMessage.Append(MessageNewLine + indent + "Logical: " + treeEvent.Logical);
             bigMessage.Append(", Status: " + treeEvent.State.ToString());
-            bigMessage.Append(delimiter + indent + "WorkingDirectory: "
+            bigMessage.Append(MessageNewLine + indent + "WorkingDirectory: "
                               + treeEvent.ReplaceWildcards("%WorkingDirectory%"));
-            bigMessage.Append(delimiter + indent + "Results: ");
+            bigMessage.Append(MessageNewLine + indent + "Results: ");
             if (treeEvent.Results != null)
             {
                 foreach (Result? result in treeEvent.Results.Values)
                 {
-                    bigMessage.Append(delimiter + indent + result?.ToString());
+                    bigMessage.Append(MessageNewLine + indent + result?.ToString());
                 }
             }
-            bigMessage.Append(delimiter + indent + "Environment: ");
+            bigMessage.Append(MessageNewLine + indent + "Environment: ");
             if (treeEvent.Environment != null)
             {
                 foreach (Result? result in treeEvent.Environment.Values)
                 {
-                    bigMessage.Append(delimiter + indent + result?.ToString());
+                    bigMessage.Append(MessageNewLine + indent + result?.ToString());
                 }
             }
 
@@ -102,8 +106,9 @@ namespace Log2MessageBox
         private void WriteLog(string message, TreeEvent treeEvent)
         {
             Process nPad = new Process();
-            nPad.StartInfo.FileName = treeEvent.GetResolvedPath("ConsoleMessageBox.exe");
-            nPad.StartInfo.Arguments = "0 " + message + " " + "Knoten-Info";
+            nPad.StartInfo.FileName = treeEvent.GetResolvedPath("VishnuMessageBox.exe");
+            nPad.StartInfo.Arguments = "-EscalationCounter=0 -Message=" + message + " -Caption=" + "Knoten-Info"
+                + " -MessageNewLine=" + MessageNewLine;
             nPad.Start();
         }
 
